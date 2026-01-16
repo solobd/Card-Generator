@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>CCCracK PRO - Real API Mode</title>
+    <title>CCCracK PRO - JS Local Mode</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
     
     <style>
+        /* CSS Same as before - No Changes needed in CSS */
         :root {
-            /* Dark Theme (Default) */
             --bg-primary: #0a0a0a;
             --bg-secondary: #141414;
             --bg-tertiary: #1f1f1f;
@@ -261,7 +261,7 @@
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-shield-alt" style="color: var(--accent-primary)"></i>
-                <div class="card-title">Real API Checker</div>
+                <div class="card-title">JS Checker Mode</div>
             </div>
             <textarea id="input-list" class="form-input" rows="6" placeholder="Paste generated cards here (CC|MM|YY|CVV)..."></textarea>
             <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px; color: #888;">
@@ -304,20 +304,18 @@
 
         <footer class="app-footer">
             <p>Developed by <span style="color: var(--accent-primary);">Md Golam Rasul</span></p>
-            <p style="font-size: 0.7rem; opacity: 0.6;">Server: toolxa.xyz | Secure Connection</p>
+            <p style="font-size: 0.7rem; opacity: 0.6;">Server: Local JS | Secure Connection</p>
         </footer>
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="api.js"></script>
 
     <script>
         $(document).ready(function() {
-            // --- CONFIGURATION ---
-            // This is the Relative Path to your PHP API on the same server
-            const API_URL = 'api.js?cc='; 
-
             // --- THEME ---
             const body = $('body');
             const themeSwitch = $('#theme-checkbox');
@@ -369,7 +367,7 @@
                 toastr.success('Copied!');
             });
 
-            // --- CHECKER LOGIC (REAL API) ---
+            // --- CHECKER LOGIC ---
             let isChecking = false;
             let checkQueue = [];
             let counts = { live: 0, die: 0, unknown: 0 };
@@ -432,13 +430,10 @@
                 $('#total-count').text(checkQueue.length);
 
                 try {
-                    // === REAL API CALL ===
-                    // Using fetch to call api.php on your server
-                    const response = await fetch(API_URL + encodeURIComponent(card));
-                    
-                    if(!response.ok) throw new Error("API Error");
-                    
-                    const data = await response.json();
+                    // ==========================================
+                    // ✅ UPDATED: Direct Call to JS Function
+                    // ==========================================
+                    const data = await checkCard(card);
                     
                     // Logic to determine Status
                     let status = 'unknown';
@@ -447,7 +442,7 @@
                     if(data.status && data.status.toLowerCase().includes('live')) status = 'live';
                     else if(data.status && data.status.toLowerCase().includes('dead')) status = 'die';
                     else if(msg.toLowerCase().includes('approved') || msg.toLowerCase().includes('charged')) status = 'live';
-                    else status = 'die'; // Default strict
+                    else status = 'die'; 
 
                     // Update UI
                     if(status === 'live') {
@@ -464,14 +459,13 @@
 
                 } catch(e) {
                     counts.unknown++;
-                    $('#lista_unknown').append(`<div class="result-item unknown-item">${card} - Server/Network Error</div>`);
+                    $('#lista_unknown').append(`<div class="result-item unknown-item">${card} - ${e.message}</div>`);
                 }
 
                 updateStats();
                 
-                // Random delay to mimic human behavior / prevent server block
-                const delay = Math.floor(Math.random() * 500) + 500;
-                setTimeout(processQueue, delay);
+                // Random delay for UI update
+                setTimeout(processQueue, 100);
             }
 
             function updateStats() {
