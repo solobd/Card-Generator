@@ -1,7 +1,7 @@
-// ==========================================
-// CC Checker Logic - Pure JavaScript
-// Developed by Md Golam Rasul
-// ==========================================
+/**
+ * CC Checker Logic - Pure JavaScript
+ * Developed by Md Golam Rasul
+ */
 
 // 1. লুহন অ্যালগরিদম ফাংশন
 function isLuhnValid(number) {
@@ -22,6 +22,7 @@ function isLuhnValid(number) {
 // 2. BIN ইনফো আনার ফাংশন (Fetch API)
 async function getBinInfo(bin) {
     try {
+        // Free BIN API - Note: May face CORS issues on local files
         const response = await fetch(`https://lookup.binlist.net/${bin}`, {
             headers: { "Accept-Version": "3" }
         });
@@ -35,6 +36,68 @@ async function getBinInfo(bin) {
     } catch (error) {
         return null;
     }
+}
+
+// 3. মেইন ফাংশন (যা কার্ড চেক করবে)
+async function checkCard(inputData) {
+    // ইনপুট না থাকলে
+    if (!inputData) {
+        return { status: "Error", result: "No data", message: "Enter card details" };
+    }
+
+    const parts = inputData.split("|");
+
+    // ফরম্যাট চেক
+    if (parts.length < 3) {
+        return { status: "Dead", result: "Invalid Format", message: "Use: CC|MM|YYYY|CVV" };
+    }
+
+    const cc = parts[0].trim();
+    let mm = parts[1].trim();
+    let yy = parts[2].trim();
+    const cvv = parts[3] ? parts[3].trim() : 'xxx';
+
+    // ১. নম্বর লেংথ চেক
+    if (isNaN(cc) || cc.length < 13 || cc.length > 19) {
+        return { status: "Dead", result: "Invalid Length", message: "Wrong length" };
+    }
+
+    // ২. লুহন চেক
+    if (!isLuhnValid(cc)) {
+        return { status: "Dead", result: "Luhn Failed", message: "Invalid Algorithm" };
+    }
+
+    // ৩. ডেট চেক
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    if (yy.length === 2) yy = "20" + yy; 
+    
+    const expYear = parseInt(yy);
+    const expMonth = parseInt(mm);
+
+    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+        return { status: "Dead", result: "Expired", message: `Expired (${mm}/${yy})` };
+    }
+
+    // ৪. বিন ইনফো আনা
+    const binInfo = await getBinInfo(cc.substring(0, 6));
+
+    // ৫. সাকসেস রেজাল্ট
+    return {
+        status: "Live",
+        result: "CVV Matched",
+        message: "Approved",
+        details: {
+            card: cc,
+            date: `${mm}/${yy}`,
+            bank: binInfo ? binInfo.bank : 'Unknown Bank',
+            country: binInfo ? binInfo.country : 'Unknown Country',
+            type: binInfo ? binInfo.type : 'Credit'
+        }
+    };
+}    }
 }
 
 // 3. মেইন ফাংশন (যা কার্ড চেক করবে)
