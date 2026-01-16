@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>CCCracK PRO - Real API Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+    
+    <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-tertiary: #1f1f1f;
+            --border-color: #333333;
+            
+            --text-primary: #00ff41; 
+            --text-secondary: #e0e0e0;
+            --text-tertiary: #888888;
+            
+            --accent-primary: #00ff41; 
+            --accent-primary-rgb: 0, 255, 65;
+            --accent-primary-text: #000000;
+
+            --status-live: #00ff41;
+            --status-live-light: rgba(0, 255, 65, 0.15);
+            --status-live-on-dark: #00ff41;
+
+            --status-unknown: #ffb700;
+            --status-unknown-light: rgba(255, 183, 0, 0.15);
+            --status-unknown-on-dark: #ffb700;
+
+            --status-declined: #ff3333;
+            --status-declined-light: rgba(255, 51, 51, 0.15);
+            --status-declined-on-dark: #ff3333;
+
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            
+            --shadow-accent: 0 0 10px rgba(var(--accent-primary-rgb), 0.4);
+            --transition-normal: 0.3s ease;
+        }
+
+        /* Light Theme Variables */
+        body.light-mode {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e4e6eb;
+            --border-color: #bcc0c4;
+            --text-secondary: #1c1e21;
+            --text-tertiary: #65676b;
+            --accent-primary: #1877f2;
+            --accent-primary-text: #ffffff;
+            --status-live: #31a24c;
+            --status-declined: #fa383e;
+            --shadow-accent: 0 0 10px rgba(24, 119, 242, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 14px; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        .app-container {
+            display: flex; flex-direction: column; min-height: 100vh;
+            max-width: 1000px; margin: 0 auto; padding: 1.5rem;
+            position: relative; z-index: 10;
+        }
+
+        /* Header */
+        .app-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 1rem; margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .app-logo-container {
+            font-size: 1.8rem; font-weight: 800; color: var(--accent-primary);
+            display: flex; align-items: center; gap: 10px;
+            text-shadow: 0 0 10px rgba(var(--accent-primary-rgb), 0.5);
+        }
+
+        .theme-action-icon {
+            width: 36px; height: 36px; background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); cursor: pointer; transition: 0.2s;
+        }
+        .theme-action-icon:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+
+        /* Switch */
+        .theme-switch-wrapper { display: flex; align-items: center; margin-left: 10px; }
+        .theme-switch { position: relative; width: 48px; height: 24px; display: inline-block; }
+        .theme-switch input { display: none; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-tertiary); border: 1px solid var(--border-color);
+            transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 2px; bottom: 2px; background-color: var(--text-secondary);
+            transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-primary); border-color: var(--accent-primary); }
+        input:checked + .slider:before { transform: translateX(24px); background-color: var(--accent-primary-text); }
+
+        /* Stats */
+        .counters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .counter {
+            background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1rem; text-align: center;
+            border: 1px solid var(--border-color); position: relative; overflow: hidden;
+        }
+        .counter::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; }
+        .counter.live::before { background: var(--status-live); }
+        .counter.declined::before { background: var(--status-declined); }
+        .counter.unknown::before { background: var(--status-unknown); }
+        
+        .counter-value { font-size: 1.8rem; font-weight: 700; color: var(--text-secondary); }
+        .counter-label { font-size: 0.75rem; color: var(--text-tertiary); font-weight: 600; }
+
+        /* Progress */
+        .progress-container {
+            width: 100%; height: 6px; background-color: var(--bg-tertiary);
+            border-radius: 99px; overflow: hidden; margin-bottom: 2rem;
+        }
+        .progress-bar {
+            height: 100%; background: var(--accent-primary); width: 0%;
+            transition: width 0.3s ease; box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(20, 20, 20, 0.85); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        body.light-mode .card { background: rgba(255, 255, 255, 0.9); }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border-color); }
+        .card-title { font-size: 1rem; font-weight: 700; text-transform: uppercase; }
+
+        /* Inputs & Buttons */
+        .form-input {
+            width: 100%; background-color: var(--bg-primary); border: 1px solid var(--border-color);
+            color: var(--text-secondary); padding: 0.7rem; font-family: inherit; border-radius: var(--radius-sm);
+        }
+        .form-input:focus { outline: none; border-color: var(--accent-primary); }
+        
+        .btn {
+            padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); font-family: inherit; font-weight: 600;
+            cursor: pointer; border: 1px solid transparent; text-transform: uppercase; font-size: 0.8rem;
+        }
+        .btn-primary { background: var(--accent-primary); color: var(--accent-primary-text); }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border-color); }
+        .btn-danger { background: var(--status-declined); color: #fff; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+
+        /* Results */
+        .results-container { display: flex; flex-direction: column; gap: 1rem; }
+        .result-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; }
+        .result-header { padding: 0.8rem; display: flex; justify-content: space-between; background: var(--bg-tertiary); }
+        .result-list { padding: 1rem; max-height: 200px; overflow-y: auto; font-size: 0.75rem; }
+        
+        .result-item { padding: 5px; margin-bottom: 5px; border-left: 3px solid transparent; background: rgba(0,0,0,0.1); }
+        .live-item { border-left-color: var(--status-live); color: var(--status-live-on-dark); }
+        .die-item { border-left-color: var(--status-declined); color: var(--status-declined-on-dark); }
+        .unknown-item { border-left-color: var(--status-unknown); color: var(--status-unknown-on-dark); }
+
+        /* Footer */
+        .app-footer { text-align: center; padding: 2rem 0; font-size: 0.8rem; color: var(--text-tertiary); }
+
+        /* Canvas & BG */
+        #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.3; }
+        .background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background-image: radial-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px); background-size: 30px 30px; pointer-events: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .counters { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="background"></div>
+    <canvas id="canvas"></canvas>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="app-logo-container">
+                <i class="fas fa-terminal"></i> CCCracK <small style="font-size: 0.8rem; opacity: 0.7; margin-left: 5px;">PRO</small>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div id="resetDataBtn" class="theme-action-icon" title="Reset All Data">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="theme-checkbox">
+                        <input type="checkbox" id="theme-checkbox" />
+                        <div class="slider"></div>
+                    </label>
+                </div>
+            </div>
+        </header>
+
+        <div class="counters">
+            <div class="counter live">
+                <div class="counter-value" id="count-live">0</div>
+                <div class="counter-label">LIVE</div>
+            </div>
+            <div class="counter declined">
+                <div class="counter-value" id="count-die">0</div>
+                <div class="counter-label">DEAD</div>
+            </div>
+            <div class="counter unknown">
+                <div class="counter-value" id="count-unknown">0</div>
+                <div class="counter-label">UNKNOWN</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="main-progress-bar"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cogs" style="color: var(--accent-primary)"></i>
+                <div class="card-title">Card Generator</div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <textarea id="bin" class="form-input" style="flex: 1; min-width: 200px;" placeholder="BIN Format: 434769xxxxxxxxxx"></textarea>
+                <div style="display: flex; flex-direction: column; gap: 5px; min-width: 100px;">
+                    <select id="month" class="form-input"><option value="Random">Month</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                    <select id="year" class="form-input"><option value="Random">Year</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option></select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px; min-width: 80px;">
+                    <input type="text" id="gencvv" class="form-input" placeholder="CVV">
+                    <input type="number" id="genqty" class="form-input" value="10" placeholder="Qty">
+                </div>
+            </div>
+            <div class="btn-group">
+                <button id="generateBtn" class="btn btn-primary"><i class="fas fa-bolt"></i> Generate</button>
+                <button id="copyGenBtn" class="btn btn-secondary"><i class="fas fa-copy"></i> Copy</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-shield-alt" style="color: var(--accent-primary)"></i>
+                <div class="card-title">Real API Checker</div>
+            </div>
+            <textarea id="input-list" class="form-input" rows="6" placeholder="Paste generated cards here (CC|MM|YY|CVV)..."></textarea>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px; color: #888;">
+                <span>Total: <span id="total-count">0</span></span>
+                <span id="status-text">WAITING</span>
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-start" class="btn btn-primary"><i class="fas fa-play"></i> START SCAN</button>
+                <button id="btn-stop" class="btn btn-secondary" disabled><i class="fas fa-stop"></i> STOP</button>
+                <button id="btn-clean-dupes" class="btn btn-secondary"><i class="fas fa-filter"></i> REMOVE DUPES</button>
+                <button id="btn-clean" class="btn btn-danger"><i class="fas fa-trash"></i> CLEAR</button>
+            </div>
+        </div>
+
+        <div class="results-container">
+            <div class="result-block">
+                <div class="result-header" style="border-bottom: 2px solid var(--status-live);">
+                    <span style="color: var(--status-live); font-weight: bold;">LIVE HITS</span>
+                    <button class="btn btn-secondary" style="padding: 2px 5px; font-size: 0.7rem;" onclick="copyList('lista_aprovadas')">COPY</button>
+                </div>
+                <div id="lista_aprovadas" class="result-list"></div>
+            </div>
+            
+            <div class="result-block">
+                <div class="result-header" style="border-bottom: 2px solid var(--status-declined);">
+                    <span style="color: var(--status-declined); font-weight: bold;">DEAD</span>
+                    <button class="btn btn-secondary" style="padding: 2px 5px; font-size: 0.7rem;" onclick="clearList('lista_reprovadas')">CLEAR</button>
+                </div>
+                <div id="lista_reprovadas" class="result-list"></div>
+            </div>
+            
+            <div class="result-block">
+                <div class="result-header" style="border-bottom: 2px solid var(--status-unknown);">
+                    <span style="color: var(--status-unknown); font-weight: bold;">UNKNOWN</span>
+                </div>
+                <div id="lista_unknown" class="result-list"></div>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            <p>Developed by <span style="color: var(--accent-primary);">Md Golam Rasul</span></p>
+            <p style="font-size: 0.7rem; opacity: 0.6;">Server: toolxa.xyz | Secure Connection</p>
+        </footer>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            // --- CONFIGURATION ---
+            // This is the Relative Path to your PHP API on the same server
+            const API_URL = 'api.js?cc='; 
+
+            // --- THEME ---
+            const body = $('body');
+            const themeSwitch = $('#theme-checkbox');
+            if(localStorage.getItem('cc-theme') === 'light') {
+                body.addClass('light-mode');
+                themeSwitch.prop('checked', true);
+            }
+            themeSwitch.change(function() {
+                if(this.checked) {
+                    body.addClass('light-mode');
+                    localStorage.setItem('cc-theme', 'light');
+                } else {
+                    body.removeClass('light-mode');
+                    localStorage.setItem('cc-theme', 'dark');
+                }
+                createSnakes();
+            });
+
+            // --- GENERATOR LOGIC ---
+            $('#generateBtn').click(function() {
+                const bin = $('#bin').val().trim();
+                const qty = parseInt($('#genqty').val()) || 10;
+                const setMonth = $('#month').val();
+                const setYear = $('#year').val();
+                const setCvv = $('#gencvv').val();
+
+                if(!bin) return toastr.error('Enter BIN!');
+
+                let cards = '';
+                for(let i=0; i<qty; i++) {
+                    let cc = bin.replace(/x/gi, '');
+                    while(cc.length < 15) cc += Math.floor(Math.random()*10);
+                    // Simple logic append for demo
+                    cc += Math.floor(Math.random()*10); 
+                    
+                    let mo = (setMonth === 'Random') ? ('0' + Math.floor(Math.random() * 12 + 1)).slice(-2) : setMonth;
+                    let yr = (setYear === 'Random') ? (Math.floor(Math.random() * 6) + 2025) : setYear;
+                    let cvv = setCvv || Math.floor(Math.random() * 899 + 100);
+                    
+                    cards += `${cc}|${mo}|${yr}|${cvv}\n`;
+                }
+                $('#input-list').val(cards.trim());
+                $('#total-count').text(cards.split('\n').filter(Boolean).length);
+                toastr.success(`${qty} Cards Generated`);
+            });
+
+            $('#copyGenBtn').click(function() {
+                navigator.clipboard.writeText($('#input-list').val());
+                toastr.success('Copied!');
+            });
+
+            // --- CHECKER LOGIC (REAL API) ---
+            let isChecking = false;
+            let checkQueue = [];
+            let counts = { live: 0, die: 0, unknown: 0 };
+
+            $('#input-list').on('input', function() {
+                $('#total-count').text($(this).val().split('\n').filter(l => l.trim().length > 5).length);
+            });
+
+            $('#btn-clean-dupes').click(function() {
+                const raw = $('#input-list').val().split('\n');
+                const unique = [...new Set(raw.filter(l => l.trim().length > 5))];
+                $('#input-list').val(unique.join('\n'));
+                $('#total-count').text(unique.length);
+                toastr.info(`Duplicates Removed. Total: ${unique.length}`);
+            });
+
+            $('#btn-start').click(function() {
+                if(isChecking) return;
+                const list = $('#input-list').val().split('\n').filter(l => l.trim().length > 5);
+                if(list.length === 0) return toastr.error("Input is empty!");
+
+                isChecking = true;
+                checkQueue = list;
+                toggleControls(true);
+                $('#status-text').text("SCANNING...");
+                processQueue();
+            });
+
+            $('#btn-stop').click(function() {
+                isChecking = false;
+                checkQueue = [];
+                toggleControls(false);
+                $('#status-text').text("STOPPED");
+                toastr.warning("Stopped");
+            });
+
+            $('#btn-clean').click(function() {
+                $('#lista_aprovadas, #lista_reprovadas, #lista_unknown').empty();
+                counts = { live: 0, die: 0, unknown: 0 };
+                updateStats();
+            });
+
+            function toggleControls(active) {
+                $('#btn-start').prop('disabled', active);
+                $('#btn-stop').prop('disabled', !active);
+                $('#input-list').prop('disabled', active);
+            }
+
+            async function processQueue() {
+                if(!isChecking || checkQueue.length === 0) {
+                    isChecking = false;
+                    toggleControls(false);
+                    $('#status-text').text("COMPLETED");
+                    if(checkQueue.length === 0) toastr.success("Job Done!");
+                    return;
+                }
+
+                const card = checkQueue.shift();
+                $('#input-list').val(checkQueue.join('\n'));
+                $('#total-count').text(checkQueue.length);
+
+                try {
+                    // === REAL API CALL ===
+                    // Using fetch to call api.php on your server
+                    const response = await fetch(API_URL + encodeURIComponent(card));
+                    
+                    if(!response.ok) throw new Error("API Error");
+                    
+                    const data = await response.json();
+                    
+                    // Logic to determine Status
+                    let status = 'unknown';
+                    let msg = data.message || data.result || "Unknown Response";
+                    
+                    if(data.status && data.status.toLowerCase().includes('live')) status = 'live';
+                    else if(data.status && data.status.toLowerCase().includes('dead')) status = 'die';
+                    else if(msg.toLowerCase().includes('approved') || msg.toLowerCase().includes('charged')) status = 'live';
+                    else status = 'die'; // Default strict
+
+                    // Update UI
+                    if(status === 'live') {
+                        counts.live++;
+                        $('#lista_aprovadas').append(`<div class="result-item live-item">${card} - <b>${msg}</b></div>`);
+                        toastr.success(`LIVE: ${card.substring(0,8)}`);
+                    } else if(status === 'die') {
+                        counts.die++;
+                        $('#lista_reprovadas').append(`<div class="result-item die-item">${card} - ${msg}</div>`);
+                    } else {
+                        counts.unknown++;
+                        $('#lista_unknown').append(`<div class="result-item unknown-item">${card} - ${msg}</div>`);
+                    }
+
+                } catch(e) {
+                    counts.unknown++;
+                    $('#lista_unknown').append(`<div class="result-item unknown-item">${card} - Server/Network Error</div>`);
+                }
+
+                updateStats();
+                
+                // Random delay to mimic human behavior / prevent server block
+                const delay = Math.floor(Math.random() * 500) + 500;
+                setTimeout(processQueue, delay);
+            }
+
+            function updateStats() {
+                $('#count-live').text(counts.live);
+                $('#count-die').text(counts.die);
+                $('#count-unknown').text(counts.unknown);
+
+                const total = counts.live + counts.die + counts.unknown + checkQueue.length;
+                const done = counts.live + counts.die + counts.unknown;
+                const percent = total === 0 ? 0 : (done / total) * 100;
+                $('#main-progress-bar').css('width', percent + '%');
+            }
+
+            // --- EXTRAS ---
+            window.copyList = function(id) {
+                let text = '';
+                $(`#${id} .result-item`).each(function() { text += $(this).text() + '\n'; });
+                navigator.clipboard.writeText(text);
+                toastr.success('Copied!');
+            };
+            window.clearList = function(id) { $(`#${id}`).empty(); };
+
+            $('#resetDataBtn').click(function() { location.reload(); });
+
+            // --- ANIMATION ---
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            let snakes = [];
+            
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            window.addEventListener('resize', resize);
+            resize();
+
+            window.createSnakes = function() {
+                snakes = [];
+                const color = body.hasClass('light-mode') ? '0,0,0' : '0, 255, 65';
+                for (let i = 0; i < 8; i++) {
+                    snakes.push({
+                        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                        vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2,
+                        trail: [], max: 20, color: `rgba(${color}, 0.5)`
+                    });
+                }
+            }
+            function animate() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                snakes.forEach(s => {
+                    s.x += s.vx; s.y += s.vy;
+                    if(s.x < 0 || s.x > canvas.width) s.vx *= -1;
+                    if(s.y < 0 || s.y > canvas.height) s.vy *= -1;
+                    s.trail.push({x:s.x, y:s.y});
+                    if(s.trail.length > s.max) s.trail.shift();
+                    
+                    ctx.beginPath(); ctx.strokeStyle = s.color; ctx.lineWidth = 2;
+                    for(let i=0; i<s.trail.length-1; i++) {
+                        ctx.moveTo(s.trail[i].x, s.trail[i].y);
+                        ctx.lineTo(s.trail[i+1].x, s.trail[i+1].y);
+                    }
+                    ctx.stroke();
+                });
+                requestAnimationFrame(animate);
+            }
+            createSnakes(); animate();
+        });
+    </script>
+</body>
+</html>

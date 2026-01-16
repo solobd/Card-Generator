@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CCScaN PRO - Dev: Md Golam Rasul</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --primary: #00ff41;    
+            --secondary: #008f11; 
+            --live: #00ffea;       
+            --dead: #ff0055;      
+            --warn: #ffcc00;     
+            --text: #e0e0e0;
+            --font: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: var(--font);
+            margin: 0;
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .wrapper { max-width: 1200px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+            font-size: 2.5rem;
+            margin: 0;
+            letter-spacing: 4px;
+        }
+        .dev-tag { font-size: 0.9rem; color: #666; margin-top: 5px; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid var(--secondary);
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-head {
+            font-weight: bold;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--primary);
+        }
+
+        .input-area { grid-column: span 3; }
+
+        textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--primary);
+            padding: 10px;
+            font-family: var(--font);
+            font-size: 13px;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+        }
+        textarea:focus { border-color: var(--primary); }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            font-family: var(--font);
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .btn-start { background: var(--secondary); color: #000; box-shadow: 0 0 10px var(--secondary); }
+        .btn-start:hover:not(:disabled) { background: var(--primary); box-shadow: 0 0 20px var(--primary); }
+        .btn-stop { background: #500; color: #fff; }
+        .btn-stop:hover:not(:disabled) { background: #f00; box-shadow: 0 0 15px #f00; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .progress-track {
+            width: 100%;
+            height: 5px;
+            background: #222;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            transition: width 0.3s;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .stat-box { min-height: 250px; }
+        .stat-count { font-size: 3rem; text-align: center; margin: 10px 0; font-weight: bold; }
+        
+        .live-panel { border-color: var(--live); }
+        .live-panel .panel-head, .live-panel .stat-count { color: var(--live); }
+        
+        .dead-panel { border-color: var(--dead); }
+        .dead-panel .panel-head, .dead-panel .stat-count { color: var(--dead); }
+        
+        .warn-panel { border-color: var(--warn); }
+        .warn-panel .panel-head, .warn-panel .stat-count { color: var(--warn); }
+
+        .result-list { flex-grow: 1; font-size: 11px; border: none; padding: 5px; }
+
+        footer { margin-top: 40px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #222; padding-top: 10px; }
+
+        @media(max-width: 768px) {
+            .grid-container { grid-template-columns: 1fr; }
+            .input-area { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <header>
+        <h1>CC<span style="color:#fff">ScaN</span> PRO</h1>
+        <div class="dev-tag">&lt; Developed by Md Golam Rasul /&gt;</div>
+    </header>
+
+    <div class="grid-container">
+        
+        <div class="panel input-area">
+            <div class="panel-head">
+                <span><i class="fas fa-server"></i> SERVER CONNECTION</span>
+                <span id="status-text" style="font-size:12px">READY TO SCAN</span>
+            </div>
+            <textarea id="cc-input" rows="8" placeholder="xxxx xxxx xxxx xxxx|mm|yyyy|cvv"></textarea>
+            
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:5px; color:#888;">
+                <span id="total-lines">Total: 0</span>
+                <span id="checked-lines">Checked: 0</span>
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-start" class="btn-start" onclick="startScan()">START SCANNING</button>
+                <button id="btn-stop" class="btn-stop" disabled onclick="stopScan()">STOP</button>
+            </div>
+        </div>
+
+        <div class="panel stat-box live-panel">
+            <div class="panel-head">
+                <span><i class="fas fa-check"></i> LIVE / APPROVED</span>
+            </div>
+            <div class="stat-count" id="count-live">0</div>
+            <textarea id="list-live" class="result-list" readonly></textarea>
+            <button onclick="copyText('list-live')" style="background:#222; color:#fff; font-size:10px; padding:5px; margin-top:5px;">COPY LIVE</button>
+        </div>
+
+        <div class="panel stat-box dead-panel">
+            <div class="panel-head">
+                <span><i class="fas fa-times"></i> DEAD / DECLINED</span>
+            </div>
+            <div class="stat-count" id="count-dead">0</div>
+            <textarea id="list-dead" class="result-list" readonly></textarea>
+        </div>
+
+        <div class="panel stat-box warn-panel">
+            <div class="panel-head">
+                <span><i class="fas fa-bug"></i> ERRORS</span>
+            </div>
+            <div class="stat-count" id="count-unknown">0</div>
+            <textarea id="list-unknown" class="result-list" readonly></textarea>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>System ID: GOLAM-RASUL-2025 | Server: toolxa.xyz | <i class="fas fa-shield-alt"></i> Protected</p>
+    </footer>
+</div>
+
+<script>
+    // --- SETUP VARIABLES ---
+    let isRunning = false;
+    let shouldStop = false;
+    
+    // ==========================================
+    // ✅ SAME SERVER CONNECTION (RELATIVE PATH)
+    // এটি অটোমেটিক আপনার সার্ভারের api.php ফাইল কল করবে
+    // ==========================================
+    const API_BASE_URL = 'api.js?cc='; 
+    
+    // UI References
+    const inputField = document.getElementById('cc-input');
+    const progressBar = document.getElementById('progress-fill');
+    const statusText = document.getElementById('status-text');
+    
+    const countLiveEl = document.getElementById('count-live');
+    const listLiveEl = document.getElementById('list-live');
+    const countDeadEl = document.getElementById('count-dead');
+    const listDeadEl = document.getElementById('list-dead');
+    const countUnknownEl = document.getElementById('count-unknown');
+    const listUnknownEl = document.getElementById('list-unknown');
+
+    async function startScan() {
+        const text = inputField.value.trim();
+        if(!text) {
+            Swal.fire({ icon: 'error', title: 'No Data', text: 'Please enter card details!', background: '#000', color: '#00ff41' });
+            return;
+        }
+
+        const lines = text.split('\n').filter(line => line.trim().length > 5);
+        if(lines.length === 0) return;
+
+        isRunning = true;
+        shouldStop = false;
+        toggleButtons(true);
+        statusText.innerText = "RUNNING...";
+        document.getElementById('total-lines').innerText = `Total: ${lines.length}`;
+        
+        let checked = 0;
+        let cLive = 0, cDead = 0, cUnknown = 0;
+        
+        listLiveEl.value = ""; countLiveEl.innerText = "0";
+        listDeadEl.value = ""; countDeadEl.innerText = "0";
+        listUnknownEl.value = ""; countUnknownEl.innerText = "0";
+
+        for(let i=0; i<lines.length; i++) {
+            if(shouldStop) break;
+
+            const line = lines[i].trim();
+            statusText.innerText = `CHECKING: ${line.split('|')[0]}...`;
+
+            try {
+                // Fetching from your own server (api.php)
+                const response = await fetch(API_BASE_URL + encodeURIComponent(line));
+
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.status} (File not found?)`);
+                }
+
+                const data = await response.json();
+                
+                // Parsing Response
+                let resultMessage = data.message || data.result || "Unknown Response";
+                let status = 'UNKNOWN';
+
+                // Status Logic
+                if (data.status === 'Live' || resultMessage.toLowerCase().includes('approved')) {
+                    status = 'LIVE';
+                } else if (data.status === 'Dead' || resultMessage.toLowerCase().includes('declined')) {
+                    status = 'DEAD';
+                } else {
+                    status = 'DEAD'; // Default to dead if mostly invalid
+                }
+
+                // UI Update
+                if (status === 'LIVE') {
+                    cLive++;
+                    countLiveEl.innerText = cLive;
+                    listLiveEl.value += `${line} -> ${resultMessage} ✅\n`;
+                } else if (status === 'DEAD') {
+                    cDead++;
+                    countDeadEl.innerText = cDead;
+                    listDeadEl.value += `${line} -> ${resultMessage} ❌\n`;
+                } else {
+                    cUnknown++;
+                    countUnknownEl.innerText = cUnknown;
+                    listUnknownEl.value += `${line} -> ${resultMessage} ⚠️\n`;
+                }
+
+            } catch (error) {
+                console.error(error);
+                cUnknown++;
+                countUnknownEl.innerText = cUnknown;
+                listUnknownEl.value += `${line} -> ERROR: ${error.message}\n`;
+            }
+
+            // Update Progress
+            checked++;
+            document.getElementById('checked-lines').innerText = `Checked: ${checked}`;
+            progressBar.style.width = ((checked / lines.length) * 100) + "%";
+            
+            listLiveEl.scrollTop = listLiveEl.scrollHeight;
+            listDeadEl.scrollTop = listDeadEl.scrollHeight;
+
+            // Small delay to prevent server overload
+            await new Promise(r => setTimeout(r, 500));
+        }
+
+        isRunning = false;
+        toggleButtons(false);
+        statusText.innerText = shouldStop ? "STOPPED" : "COMPLETED";
+        
+        if(!shouldStop) {
+            Swal.fire({ icon: 'success', title: 'Job Done', background: '#000', color: '#00ff41' });
+        }
+    }
+
+    function stopScan() { shouldStop = true; statusText.innerText = "STOPPING..."; }
+    function toggleButtons(active) {
+        document.getElementById('btn-start').disabled = active;
+        document.getElementById('btn-stop').disabled = !active;
+    }
+    function copyText(id) {
+        document.getElementById(id).select();
+        document.execCommand('copy');
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copied', showConfirmButton: false, timer: 1000, background: '#111', color: '#fff' });
+    }
+</script>
+
+</body>
+</html>
